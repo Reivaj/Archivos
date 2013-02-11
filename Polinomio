@@ -1,0 +1,191 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define DERIVAR 1
+#define SUMAR 2
+#define SALIR 3
+
+typedef struct Pol{
+    int coeficiente;
+    char variable;
+    int exponente;
+    struct Pol* sig;
+}Polinomio;
+
+typedef Polinomio *casilla;
+typedef casilla polinomio;
+
+typedef struct Nod{
+    polinomio pol;
+    struct Nod* sig;
+}Nodo;
+
+typedef Nodo *posicion;
+typedef posicion Lista;
+
+
+void inicializa(Lista *l){
+    *l=NULL;
+    *l=(posicion)malloc(sizeof(Polinomio));
+    (*l)->pol=NULL;
+    (*l)->sig=NULL;
+}
+
+void insertaP(int terminos, Lista *l){
+    int i, band;
+    polinomio aux,aux2;
+    for(i=0;i<terminos;i++){
+        aux=(casilla)malloc(sizeof(Polinomio));
+        printf("Inserta tu coeficiente %d\n",(i+1));
+        scanf("%d",&(aux->coeficiente));
+        printf("Inserta tu variable %d\n",(i+1));
+        fflush(stdin);
+        aux->variable=getchar();
+        band=1;
+        while(band){
+                aux2=(*l)->pol;
+                printf("Inserta tu exponente %d\n",(i+1));
+                scanf("%d",&(aux->exponente));
+                while(aux2 != NULL){
+                if((aux2->variable == aux->variable) && (aux2->exponente ==aux->exponente))
+                {
+                    printf("Ya tienes un termino igual, inserta con otro exponente\n");
+                    fflush(stdin);
+                    getchar();
+                    break;
+            }
+            aux2=aux2->sig;
+        }
+            if(aux2 == NULL)
+            band = 0;
+        }
+        aux->sig=(*l)->pol;
+        (*l)->pol=aux;
+    }
+}
+
+void imprime(Lista l){
+    polinomio aux;
+    aux=l->pol;
+    while(aux != NULL){
+        if((aux->coeficiente)>0)
+            printf("+");
+            printf("%d",aux->coeficiente);
+            if(!((aux->exponente)==0))
+            printf("%c",aux->variable);
+        if((aux->exponente)>1){
+            printf("^");
+            printf("%d",aux->exponente);
+        }
+        aux=aux->sig;
+    }
+}
+
+void derivaP(Lista *l){
+    polinomio aux;
+    aux=(*l)->pol;
+    while((*l)->pol != NULL){
+        (*l)->pol->coeficiente = (*l)->pol->exponente * (*l)->pol->coeficiente;
+        (*l)->pol->exponente--;
+        (*l)->pol=(*l)->pol->sig;
+    }
+    (*l)->pol=aux;
+}
+
+void anulaP(Lista *l){
+    polinomio aux;
+    while((*l)->pol->sig!= NULL){
+        aux=(*l)->pol;
+        (*l)->pol=(*l)->pol->sig;
+        free(aux);
+    }
+    free((*l)->pol);
+    (*l)->pol=NULL;
+}
+
+void insertaL(int listas, Lista *l){
+    int i;
+    Lista aux;
+    for(i=1;i<listas;i++){
+        aux=(posicion)malloc(sizeof(Nodo));
+        aux->sig=(*l);
+        (*l)=aux;
+    }
+}
+
+void sumaP(Lista *l){
+    Lista aux;
+    polinomio tmp;
+    aux=(*l)->sig;
+    tmp=(*l)->pol;
+    while(aux!=NULL){
+        while(aux->pol!=NULL){
+            (*l)->pol=tmp;
+             while((*l)->pol != NULL){
+                 if((aux->pol->variable == (*l)->pol->variable) &&
+                    aux->pol->exponente == (*l)->pol->exponente)
+                    (*l)->pol->coeficiente += aux->pol->coeficiente;
+                    (*l)->pol=(*l)->pol->sig;
+             }
+            aux->pol=aux->pol->sig;
+        }
+        aux=aux->sig;
+    }
+(*l)->pol=tmp;
+}
+
+int main()
+{   int opcion,i,tmp;
+    Lista l,aux;
+    inicializa(&l);
+    do{
+        system("CLS");
+        printf("1.Derivar Polinomio\n");
+        printf("2.Sumar Polinomios\n");
+        printf("3.Salir\n");
+        scanf("%d",&opcion);
+        switch(opcion){
+        case DERIVAR: printf("Cuantos terminos insertas?\n");
+                      scanf("%d",&tmp);
+                      insertaP(tmp,&l);
+                      printf("Polinomio original\n");
+                      imprime(l);
+                      derivaP(&l);
+                      printf("\nPolinomio derivado\n");
+                      imprime(l);
+                      fflush(stdin);
+                      getchar();
+                      anulaP(&l);
+                      break;
+        case SUMAR: printf("Cuantos Polinomios quieres insertar?\n");
+                    scanf("%d",&tmp);
+                    insertaL(tmp,&l);
+                    aux=l;
+                    while(l!=NULL){
+                        printf("Cuantos terminos insertas en tu polinomio ?\n");
+                        scanf("%d",&tmp);
+                        insertaP(tmp,&l);
+                        l=l->sig;
+                    }
+                      l=aux;
+                      sumaP(&l);
+                      l=aux;
+                      imprime(l);
+                      fflush(stdin);
+                      getchar();
+                      for(i=1;i<tmp;i++){
+                        aux=l;
+                        l=l->sig;
+                        anulaP(&aux);
+                      }
+                      free(l);
+                      inicializa(&l);
+                    break;
+        case SALIR: printf("Saliendo");
+                    break;
+        default: printf("Opcion incorrecta vuelva a intentar");
+                      break;
+        }
+    }while(opcion!=SALIR);
+
+    return 0;
+}
